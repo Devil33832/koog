@@ -16,6 +16,8 @@ import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.llm.LLModel
 import com.jetbrains.example.kotlin_agents_demo_app.agents.common.AgentProvider
 import com.jetbrains.example.kotlin_agents_demo_app.agents.common.ExitTool
 import com.jetbrains.example.kotlin_agents_demo_app.settings.AppSettings
@@ -23,7 +25,7 @@ import com.jetbrains.example.kotlin_agents_demo_app.settings.AppSettings
 /**
  * Factory for creating weather forecast agents
  */
-internal class WeatherAgentProvider : AgentProvider {
+internal class WeatherAgentProvider(val defaultExecutor: PromptExecutor?, val defaultModel: LLModel?) : AgentProvider {
     override val title: String = "Weather Forecast"
     override val description: String = "Hi, I'm a weather agent. I can provide weather forecasts for any location."
 
@@ -33,10 +35,14 @@ internal class WeatherAgentProvider : AgentProvider {
         onErrorEvent: suspend (String) -> Unit,
         onAssistantMessage: suspend (String) -> String,
     ): AIAgent<String, String> {
-        val openAiApiKey = appSettings.getCurrentSettings().openAiToken
-        require(openAiApiKey.isNotEmpty()) { "OpenAI api key is not configured." }
+        val settings = appSettings.getCurrentSettings()
+        val executor: PromptExecutor = defaultExecutor ?: run {
+            val openAiToken = settings.openAiToken
+            require(openAiToken.isNotEmpty()) { "OpenAI token is not configured." }
+            simpleOpenAIExecutor(openAiToken)
+        }
 
-        val executor = simpleOpenAIExecutor(openAiApiKey)
+        val model = defaultModel ?: OpenAIModels.Chat.GPT4o
 
         // Create tool registry with weather tools
         val toolRegistry = ToolRegistry {
@@ -121,7 +127,7 @@ internal class WeatherAgentProvider : AgentProvider {
                     """.trimIndent()
                 )
             },
-            model = OpenAIModels.Chat.GPT4o,
+            model = model,
             maxAgentIterations = 50
         )
 

@@ -18,6 +18,11 @@ data class StartUiState(
             description = "A weather agent that can provide forecasts for any location. Ask about weather conditions, dates, and more.",
             agentDemoRoute = NavRoute.AgentDemoRoute.WeatherScreen
         ),
+        CardItem(
+            title = "Chat",
+            description = "Simple chat with LLM.",
+            agentDemoRoute = NavRoute.AgentDemoRoute.ChatScreen
+        ),
     )
 )
 

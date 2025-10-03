@@ -1,9 +1,6 @@
 package com.jetbrains.example.kotlin_agents_demo_app.agents.calculator
 
 import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.agents.core.tools.ToolParameterDescriptor
-import ai.koog.agents.core.tools.ToolParameterType
 import kotlinx.serialization.Serializable
 import ai.koog.agents.core.tools.annotations.LLMDescription
 
@@ -14,7 +11,7 @@ object CalculatorTools {
     ) : Tool<CalculatorTool.Args, CalculatorTool.Result>() {
         @Serializable
         data class Args(
-            @property:LLMDescription("First number")// "Second number"
+            @property:LLMDescription("First number")
             val a: Float,
             @property:LLMDescription("Second number")
             val b: Float

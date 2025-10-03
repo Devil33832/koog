@@ -79,6 +79,16 @@ fun ComposeApp() = AppTheme {
                     viewModel = koin.get { parametersOf(agentProvider) }
                 )
             }
+
+            composable<NavRoute.AgentDemoRoute.ChatScreen> {
+                val agentProvider: AgentProvider = koin.get(named("chat"))
+                AgentDemoScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    viewModel = koin.get { parametersOf(agentProvider) }
+                )
+            }
         }
     }
 }
@@ -104,5 +114,8 @@ sealed interface NavRoute {
 
         @Serializable
         data object WeatherScreen : AgentDemoRoute
+
+        @Serializable
+        data object ChatScreen : AgentDemoRoute
     }
 }

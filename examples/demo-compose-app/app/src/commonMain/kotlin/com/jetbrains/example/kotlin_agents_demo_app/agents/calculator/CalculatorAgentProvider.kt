@@ -2,6 +2,7 @@ package com.jetbrains.example.kotlin_agents_demo_app.agents.calculator
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteMultipleTools
@@ -16,6 +17,8 @@ import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.llm.LLModel
 import com.jetbrains.example.kotlin_agents_demo_app.agents.common.AgentProvider
 import com.jetbrains.example.kotlin_agents_demo_app.agents.common.ExitTool
 import com.jetbrains.example.kotlin_agents_demo_app.settings.AppSettings
@@ -23,7 +26,7 @@ import com.jetbrains.example.kotlin_agents_demo_app.settings.AppSettings
 /**
  * Factory for creating calculator agents
  */
-internal class CalculatorAgentProvider : AgentProvider {
+internal class CalculatorAgentProvider(val defaultExecutor: PromptExecutor? = null, val defaultModel: LLModel? = null) : AgentProvider {
     override val title: String = "Calculator"
     override val description: String = "Hi, I'm a calculator agent, I can do math"
 
@@ -33,10 +36,14 @@ internal class CalculatorAgentProvider : AgentProvider {
         onErrorEvent: suspend (String) -> Unit,
         onAssistantMessage: suspend (String) -> String,
     ): AIAgent<String, String> {
-        val openAiToken = appSettings.getCurrentSettings().openAiToken
-        require(openAiToken.isNotEmpty()) { "OpenAI token is not configured." }
+        val settings = appSettings.getCurrentSettings()
+        val executor: PromptExecutor = defaultExecutor ?: run {
+            val openAiToken = settings.openAiToken
+            require(openAiToken.isNotEmpty()) { "OpenAI token is not configured." }
+            simpleOpenAIExecutor(openAiToken)
+        }
 
-        val executor = simpleOpenAIExecutor(openAiToken)
+        val model = defaultModel ?: OpenAIModels.Chat.GPT4o
 
         // Create tool registry with calculator tools
         val toolRegistry = ToolRegistry {
@@ -49,6 +56,7 @@ internal class CalculatorAgentProvider : AgentProvider {
         }
 
         @Suppress("DuplicatedCode")
+        (singleRunStrategy())
         val strategy = strategy(title) {
             val nodeRequestLLM by nodeLLMRequestMultiple()
             val nodeAssistantMessage by node<String, String> { message -> onAssistantMessage(message) }
@@ -115,7 +123,7 @@ internal class CalculatorAgentProvider : AgentProvider {
                     """.trimIndent()
                 )
             },
-            model = OpenAIModels.Chat.GPT4o,
+            model = model,
             maxAgentIterations = 50
         )
 
