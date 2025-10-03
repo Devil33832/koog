@@ -69,6 +69,9 @@ kotlin {
             implementation(compose.uiTooling)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.kotlinx.coroutines.android)
+            // Local android models
+            implementation(libs.genai)
+            implementation(libs.localagents)
         }
 
         jvmMain.dependencies {
