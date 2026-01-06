@@ -12,8 +12,10 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.extension.containsToolCalls
-import ai.koog.agents.core.dsl.extension.nodeLLMRequestMultiple
-import ai.koog.agents.core.dsl.extension.nodeLLMSendMultipleToolResults
+import ai.koog.agents.core.dsl.extension.nodeLLMRequestMultipleOnlyCallingTools
+import ai.koog.agents.core.dsl.extension.nodeLLMRequestOnlyCallingTools
+import ai.koog.agents.core.dsl.extension.nodeLLMSendMultipleToolResultsOnlyCallingTools
+import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResultOnlyCallingTools
 import ai.koog.agents.core.dsl.extension.setToolChoiceRequired
 import ai.koog.agents.core.environment.ReceivedToolResult
 import ai.koog.agents.core.environment.ToolResultKind
@@ -475,7 +477,12 @@ public inline fun <reified Input, reified Output, reified OutputTransformed> AIA
     // Helper node to overcome problems of the current api and repeat less code when writing routing conditions
     val nodeDecide by node<List<Message.Response>, List<Message.Response>> { it }
 
-    val nodeCallLLM by nodeLLMRequestMultiple()
+    val nodeCallLLMDelegate = if (runMode == ToolCalls.SINGLE_RUN_SEQUENTIAL) {
+        nodeLLMRequestOnlyCallingTools().transform { listOf(it) }
+    } else {
+        nodeLLMRequestMultipleOnlyCallingTools()
+    }
+    val nodeCallLLM by nodeCallLLMDelegate
 
     val callToolsHacked by node<List<Message.Tool.Call>, List<ReceivedToolResult>> { toolCalls ->
         val (finishToolCalls, regularToolCalls) = toolCalls.partition { it.tool == finishTool.name }
@@ -504,7 +511,12 @@ public inline fun <reified Input, reified Output, reified OutputTransformed> AIA
         }
     }
 
-    val sendToolsResults by nodeLLMSendMultipleToolResults()
+    val sendToolResultsDelegate = if (runMode == ToolCalls.SINGLE_RUN_SEQUENTIAL) {
+        nodeLLMSendToolResultOnlyCallingTools().transform { listOf(it) }
+    } else {
+        nodeLLMSendMultipleToolResultsOnlyCallingTools()
+    }
+    val sendToolsResults by sendToolResultsDelegate
 
     @OptIn(DetachedPromptExecutorAPI::class)
     val handleAssistantMessage by node<Message.Assistant, List<Message.Response>> { response ->
