@@ -366,6 +366,18 @@ public class AIAgentLLMWriteSession internal constructor(
     }
 
     /**
+     * Requests a single response from the Language Model (LLM) enforcing tool usage (`ToolChoice.Required`),
+     * validates the session, and processes all returned messages (e.g. thinking + tool call).
+     *
+     * Crucially, this method appends received messages to the prompt history to preserve context.
+     *
+     * @return A list of responses received from the Language Model (LLM).
+     */
+    override suspend fun requestLLMOnlyCallingTools(): Message.Response {
+        return super.requestLLMOnlyCallingTools().also { response -> appendPrompt { message(response) } }
+    }
+
+    /**
      * Requests a response from the Language Model (LLM) enforcing tool usage (`ToolChoice.Required`),
      * validates the session, and processes all returned messages (e.g. thinking + tool call).
      *
