@@ -168,7 +168,7 @@ public sealed class AIAgentLLMSession(
         val promptWithOnlyCallingTools = preparePromptWithToolChoice(LLMParams.ToolChoice.Required)
         val responses = executeMultiple(promptWithOnlyCallingTools, tools)
         return responses.firstOrNull { it is Message.Tool.Call }
-            ?: error("requestLLMOnlyCallingTools expected at least one Tool.Call but received: ${responses.map { it::class.simpleName }}")
+            ?: responses.first { it !is Message.Reasoning }
     }
 
     /**
