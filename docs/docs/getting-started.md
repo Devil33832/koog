@@ -483,7 +483,7 @@ To use Koog, you need to include all necessary dependencies in your build config
         val result = agent.run("Hello! How can you help me?")
         println(result)
     }
-    ```
+    ``.
     <!--- KNIT example-getting-started-07.kt -->
 
     The example can produce the following output:
